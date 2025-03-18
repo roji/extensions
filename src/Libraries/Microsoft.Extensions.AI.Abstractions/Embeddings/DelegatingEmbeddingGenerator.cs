@@ -10,28 +10,25 @@ using Microsoft.Shared.Diagnostics;
 namespace Microsoft.Extensions.AI;
 
 /// <summary>
-/// Provides an optional base class for an <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> that passes through calls to another instance.
+/// Provides an optional base class for an <see cref="IEmbeddingGenerator"/> that passes through calls to another instance.
 /// </summary>
-/// <typeparam name="TInput">The type of the input passed to the generator.</typeparam>
-/// <typeparam name="TEmbedding">The type of the embedding instance produced by the generator.</typeparam>
 /// <remarks>
-/// This type is recommended as a base type when building generators that can be chained around an underlying <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/>.
+/// This type is recommended as a base type when building generators that can be chained around an underlying <see cref="IEmbeddingGenerator"/>.
 /// The default implementation simply passes each call to the inner generator instance.
 /// </remarks>
-public class DelegatingEmbeddingGenerator<TInput, TEmbedding> : IEmbeddingGenerator<TInput, TEmbedding>
-    where TEmbedding : Embedding
+public class DelegatingEmbeddingGenerator : IEmbeddingGenerator
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="DelegatingEmbeddingGenerator{TInput, TEmbedding}"/> class.
+    /// Initializes a new instance of the <see cref="DelegatingEmbeddingGenerator"/> class.
     /// </summary>
     /// <param name="innerGenerator">The wrapped generator instance.</param>
-    protected DelegatingEmbeddingGenerator(IEmbeddingGenerator<TInput, TEmbedding> innerGenerator)
+    protected DelegatingEmbeddingGenerator(IEmbeddingGenerator innerGenerator)
     {
         InnerGenerator = Throw.IfNull(innerGenerator);
     }
 
-    /// <summary>Gets the inner <see cref="IEmbeddingGenerator{TInput, TEmbedding}" />.</summary>
-    protected IEmbeddingGenerator<TInput, TEmbedding> InnerGenerator { get; }
+    /// <summary>Gets the inner <see cref="IEmbeddingGenerator" />.</summary>
+    protected IEmbeddingGenerator InnerGenerator { get; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -41,8 +38,12 @@ public class DelegatingEmbeddingGenerator<TInput, TEmbedding> : IEmbeddingGenera
     }
 
     /// <inheritdoc />
-    public virtual Task<GeneratedEmbeddings<TEmbedding>> GenerateAsync(IEnumerable<TInput> values, EmbeddingGenerationOptions? options = null, CancellationToken cancellationToken = default) =>
-        InnerGenerator.GenerateAsync(values, options, cancellationToken);
+    public virtual Task<GeneratedEmbeddings<Embedding>> GenerateAsync(
+        IEnumerable<object> values,
+        Type embeddingType,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default) =>
+        InnerGenerator.GenerateAsync(values, embeddingType, options, cancellationToken);
 
     /// <inheritdoc />
     public virtual object? GetService(Type serviceType, object? serviceKey = null)

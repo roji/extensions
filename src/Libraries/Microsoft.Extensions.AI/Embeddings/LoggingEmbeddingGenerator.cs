@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +15,10 @@ namespace Microsoft.Extensions.AI;
 /// <typeparam name="TInput">Specifies the type of the input passed to the generator.</typeparam>
 /// <typeparam name="TEmbedding">Specifies the type of the embedding instance produced by the generator.</typeparam>
 /// <para>
-/// The provided implementation of <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/> is thread-safe for concurrent use
+/// The provided implementation of <see cref="IEmbeddingGenerator"/> is thread-safe for concurrent use
 /// so long as the <see cref="ILogger"/> employed is also thread-safe for concurrent use.
 /// </para>
-public partial class LoggingEmbeddingGenerator<TInput, TEmbedding> : DelegatingEmbeddingGenerator<TInput, TEmbedding>
-    where TEmbedding : Embedding
+public partial class LoggingEmbeddingGenerator<TInput, TEmbedding> : DelegatingEmbeddingGenerator
 {
     /// <summary>An <see cref="ILogger"/> instance used for all logging.</summary>
     private readonly ILogger _logger;
@@ -29,9 +27,9 @@ public partial class LoggingEmbeddingGenerator<TInput, TEmbedding> : DelegatingE
     private JsonSerializerOptions _jsonSerializerOptions;
 
     /// <summary>Initializes a new instance of the <see cref="LoggingEmbeddingGenerator{TInput, TEmbedding}"/> class.</summary>
-    /// <param name="innerGenerator">The underlying <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/>.</param>
+    /// <param name="innerGenerator">The underlying <see cref="IEmbeddingGenerator"/>.</param>
     /// <param name="logger">An <see cref="ILogger"/> instance that will be used for all logging.</param>
-    public LoggingEmbeddingGenerator(IEmbeddingGenerator<TInput, TEmbedding> innerGenerator, ILogger logger)
+    public LoggingEmbeddingGenerator(IEmbeddingGenerator innerGenerator, ILogger logger)
         : base(innerGenerator)
     {
         _logger = Throw.IfNull(logger);
@@ -46,7 +44,11 @@ public partial class LoggingEmbeddingGenerator<TInput, TEmbedding> : DelegatingE
     }
 
     /// <inheritdoc/>
-    public override async Task<GeneratedEmbeddings<TEmbedding>> GenerateAsync(IEnumerable<TInput> values, EmbeddingGenerationOptions? options = null, CancellationToken cancellationToken = default)
+    public override async Task<GeneratedEmbeddings<Embedding>> GenerateAsync(
+        IEnumerable<object> values,
+        Type embeddingType,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
     {
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -62,7 +64,7 @@ public partial class LoggingEmbeddingGenerator<TInput, TEmbedding> : DelegatingE
 
         try
         {
-            var embeddings = await base.GenerateAsync(values, options, cancellationToken).ConfigureAwait(false);
+            var embeddings = await base.GenerateAsync(values, embeddingType, options, cancellationToken).ConfigureAwait(false);
 
             LogCompleted(embeddings.Count);
 

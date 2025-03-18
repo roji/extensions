@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.Extensions.AI;
 
-/// <summary>Provides metadata about an <see cref="IEmbeddingGenerator{TInput, TEmbedding}"/>.</summary>
+/// <summary>Provides metadata about an <see cref="IEmbeddingGenerator"/>.</summary>
 public class EmbeddingGeneratorMetadata
 {
     /// <summary>Initializes a new instance of the <see cref="EmbeddingGeneratorMetadata"/> class.</summary>
